@@ -35,76 +35,72 @@ class _EditorPageState extends State<EditorPage> {
     super.dispose();
   }
 
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  //                       START CHANGES HERE
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+  
 
   void _saveNote() async {
-    // --- CHANGE 1: Trim whitespace from text fields ---
+    
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    // --- END CHANGE 1 ---
+    
 
-    // --- CHANGE 2: Basic validation - Don't save empty notes ---
+    
     if (title.isEmpty && content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Note cannot be empty!')),
       );
-      return; // Exit if both are empty
+      return; 
     }
-    // --- END CHANGE 2 ---
+    
 
-    // --- CHANGE 3: Robust null check for current user ---
+    
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       print("Error: User not logged in. Cannot save note.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to save notes.')),
       );
-      // Optionally, you might want to navigate back to the login screen here.
-      // E.g., if (mounted) { Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => LoginView()), (Route<dynamic> route) => false); }
-      return; // Exit function if no user
+      
+      
+      return; 
     }
-    // --- END CHANGE 3 ---
+    
 
-    final userId = user.uid; // User is guaranteed non-null here
+    final userId = user.uid; 
     final notesCollection = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('notes');
 
-    // --- CHANGE 4: Wrap Firestore operations in try-catch for error handling ---
+    
     try {
-      // Check if it's an existing note (noteId is not null and not empty)
+      
       if (widget.noteId != null && widget.noteId!.isNotEmpty) {
         await notesCollection.doc(widget.noteId).update({
           'title': title,
           'content': content,
-          'timestamp': FieldValue.serverTimestamp(), // Update timestamp on modification
+          'timestamp': FieldValue.serverTimestamp(), 
         });
         print('Note updated: ${widget.noteId}');
       } else {
-        // This is a new note, so add it.
-        // --- CHANGE 5: REMOVED DUPLICATE ADD OPERATION ---
-        // The previous code had a second, unconditional 'add' operation after this 'else' block.
-        // That duplicate 'add' caused two notes to be saved for new entries.
-        // Ensure this is the *only* 'add' operation in this method.
+        
+        
+        
         await notesCollection.add({
           'title': title,
           'content': content,
-          'timestamp': FieldValue.serverTimestamp(), // Initial timestamp for new note
+          'timestamp': FieldValue.serverTimestamp(), 
         });
         print('New note added for user: $userId');
       }
 
-      // --- CHANGE 6: Show success message and pop() only after successful save/update ---
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(widget.noteId != null ? 'Note updated!' : 'Note saved!')),
         );
       }
-      Navigator.pop(context); // Pop the EditorPage after successful saving
-      // --- END CHANGE 6 ---
+      Navigator.pop(context); 
+      
 
     } catch (e) {
       print("Error saving note: $e");
@@ -127,7 +123,7 @@ class _EditorPageState extends State<EditorPage> {
         ),
         actions: [
           TextButton(
-            onPressed: _saveNote, // This is correct, remains the same
+            onPressed: _saveNote, 
             child: const Text('Save'),
           ),
         ],
@@ -136,10 +132,10 @@ class _EditorPageState extends State<EditorPage> {
         padding: const EdgeInsets.all(16.0),
         child: TextField(
           controller: _contentController,
-          // --- CHANGE 7: Allow content TextField to expand and handle multiple lines ---
-          maxLines: null, // Allows unlimited lines
-          expands: true, // Makes the TextField take up available vertical space
-          // --- END CHANGE 7 ---
+          
+          maxLines: null, 
+          expands: true, 
+          
           decoration: const InputDecoration(border: InputBorder.none, hintText: 'Start typing your note...'),
         ),
       ),
